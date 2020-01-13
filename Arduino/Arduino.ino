@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include <math.h>
 
 #define TILT 6
 #define PAN 5
@@ -44,7 +45,22 @@ void loop()
   int offset_y = offset_y_str.substring(0, offset_y_str.length() - 2).toInt();
   int offset_z = offset_z_str.substring(0, offset_z_str.length() - 2).toInt();
 
-  
+  int tilt = get_tilt(x, y+offset_y, z+offset_z);
+  int pan = get_pan(x, y+offset_y, z+offset_z);
+
+  if ((TILT_START+tilt > 10) && (TILT_START+tilt<170)){
+    tilt_servo.write(TILT_START + tilt);
+  }
+  if ((PAN_START + pan > 10) && (PAN_START + pan < 170)){
+    pan_servo.write(PAN_START + pan);
+  }
+}
+
+int get_tilt(int x, int y, int z){
+  return atan(y/x)*180/3.1415;  
+}
+int get_pan(int x, int y, int z){
+  return 90 - acos(z/sqrt(x*x + y*y + z*z));
 }
 
 
