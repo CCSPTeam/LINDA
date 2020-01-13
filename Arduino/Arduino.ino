@@ -3,13 +3,12 @@
 
 #define TILT 6
 #define PAN 5
-#define MOTOR 3
+#define MOTOR 2
 #define LED_RED 3
 #define LED_GREEN 4
-#define POTARD A0
-#define BTN_PLUS 3
-#define BTN_MOINS 8
-#define BTN 9
+#define BTN_PLUS 10
+#define BTN_MOINS 11
+#define BTN 12
 
 #define TILT_START 85
 #define PAN_START 90
@@ -41,6 +40,23 @@ void setup()
   pinMode(BTN, INPUT_PULLUP);
   
   Serial.begin(9600);
+
+  digitalWrite(LED_RED, HIGH);
+  delay(100);
+  digitalWrite(LED_RED, LOW);
+  delay(100);
+  digitalWrite(LED_RED, HIGH);
+  delay(100);
+  digitalWrite(LED_RED, LOW);
+  delay(100);
+  digitalWrite(LED_RED, HIGH);
+  delay(100);
+  digitalWrite(LED_RED, LOW);
+  delay(100);
+
+  pan_servo.write(30);
+  delay(1000);
+  pan_servo.write(160);
 }
 
 int offset_y = 0;
@@ -85,16 +101,17 @@ void loop()
 
       // Puis modifier tilt pour placer le laser sur la mire 
       if (digitalRead(BTN_PLUS) == LOW){
-        tilt = tilt + 5;
+        tilt = tilt + 10;
       }
       else if (digitalRead(BTN_MOINS) == LOW){
-        tilt = tilt - 5;
+        tilt = tilt - 10;
       }
       else if (digitalRead(BTN) == LOW){
         state = 2;
       }
+      Serial.println(tilt);
       tilt_servo.write(tilt);
-      delay(100); // Bounce Filter
+      delay(200); // Bounce Filter
       break;
       
     case 2:
@@ -106,16 +123,16 @@ void loop()
 
       // Puis modifier PAN pour placer le laser sur la mire
       if (digitalRead(BTN_PLUS) == LOW){
-        pan = pan + 5;
+        pan = pan + 10;
       }
       else if (digitalRead(BTN_MOINS) == LOW){
-        pan = pan - 5;
+        pan = pan - 10;
       }
       else if (digitalRead(BTN) == LOW){
         state = 3;
       }
       pan_servo.write(pan);
-      delay(100); // Bounce Filter
+      delay(200); // Bounce Filter
       break;
 
     case 3:
