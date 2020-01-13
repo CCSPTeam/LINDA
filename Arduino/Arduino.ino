@@ -31,25 +31,41 @@ void setup()
 
 void loop()
 {
+  String x_str = readline();
+  String y_str = readline();
+  String z_str = readline();
+  String offset_y_str = readline();
+  String offset_z_str = readline();
+
+  int x = x_str.substring(0, x_str.length() - 2).toInt();
+  int y = y_str.substring(0, y_str.length() - 2).toInt();
+  int z = z_str.substring(0, z_str.length() - 2).toInt();
+  
+  int offset_y = offset_y_str.substring(0, offset_y_str.length() - 2).toInt();
+  int offset_z = offset_z_str.substring(0, offset_z_str.length() - 2).toInt();
+
+  
 }
 
+
+
 void start_serial(long baudrate) {
-	// Initialisation de la liaison série
+	// Initialisation de la liaison sï¿½rie
 	Serial.begin(baudrate);
 	String data;
 
-	// Procédure de connexion : Reçoit SYN, repond ACK et c'est bon.
+	// Procï¿½dure de connexion : Reï¿½oit SYN, repond ACK et c'est bon.
 	while (data != String("SYN\r\n")) {
 		data = readline();
 		if (data != String("SYN\r\n")) {
-			Serial.println("NACK"); // Si message reçu bizarre, répond NACK
+			Serial.println("NACK"); // Si message reï¿½u bizarre, rï¿½pond NACK
 		}
 	}
 	Serial.println("ACK");
 }
 
 String readline() {
-	// Renvoie la ligne (finit par \n) dispo sur la liaison série
+	// Renvoie la ligne (finit par \n) dispo sur la liaison sï¿½rie
 	String data = "";
 	char c = ' ';
 	while (c != '\n') {
