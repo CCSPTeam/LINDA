@@ -39,7 +39,7 @@ void setup()
   pinMode(BTN_MOINS, INPUT_PULLUP);
   pinMode(BTN, INPUT_PULLUP);
   
-  Serial.begin(9600);
+  start_serial(9600);
 
   digitalWrite(LED_RED, HIGH);
   delay(100);
@@ -54,9 +54,7 @@ void setup()
   digitalWrite(LED_RED, LOW);
   delay(100);
 
-  pan_servo.write(30);
-  delay(1000);
-  pan_servo.write(160);
+  
 }
 
 int offset_y = 0;
@@ -76,6 +74,21 @@ String readline() {
     }
   }
   return data;
+}
+
+void start_serial(long baudrate) {
+  // Initialisation de la liaison s�rie
+  Serial.begin(baudrate);
+  String data;
+
+  // Proc�dure de connexion : Re�oit SYN, repond ACK et c'est bon.
+  while (data != String("SYN\r\n")) {
+    data = readline();
+    if (data != String("SYN\r\n")) {
+      Serial.println("NACK"); // Si message re�u bizarre, r�pond NACK
+    }
+  }
+  Serial.println("ACK");
 }
 
 void loop()
@@ -109,7 +122,6 @@ void loop()
       else if (digitalRead(BTN) == LOW){
         state = 2;
       }
-      Serial.println(tilt);
       tilt_servo.write(tilt);
       delay(200); // Bounce Filter
       break;
@@ -166,7 +178,9 @@ void loop()
       
       pan = PAN_START + atan(x/z);
       tilt = TILT_START + atan(y/sqrt(x*x+z*z));
-
+      Serial.print(tilt);
+      Serial.print(",");
+      Serial.println(pan);
       tilt_servo.write(tilt);
       pan_servo.write(pan);
       state = 4;
