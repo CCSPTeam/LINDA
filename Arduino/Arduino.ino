@@ -4,7 +4,12 @@
 #define TILT 6
 #define PAN 5
 #define MOTOR 3
-#define LED 3
+#define LED_RED 3
+#define LED_GREEN 4
+#define POTARD A0
+#define BTN_PLUS 3
+#define BTN_MOINS 8
+#define BTN 9
 
 #define TILT_START 85
 #define PAN_START 90
@@ -12,83 +17,141 @@
 Servo pan_servo;
 Servo tilt_servo;
 
+short state = 0;
+int tilt = TILT_START;
+int pan = PAN_START;
+
 void setup()
 {
 	// Attach pin to servo
-    pan_servo.attach(PAN);
+  pan_servo.attach(PAN);
 	tilt_servo.attach(TILT);
 	
 	// Set start position
-    pan_servo.write(PAN_START);    
-    tilt_servo.write(TILT_START);
+  pan_servo.write(PAN_START);    
+  tilt_servo.write(TILT_START);
 	
 	// Set pin Mode for motor and 
-    pinMode(MOTOR, OUTPUT);
-	pinMode(LED, OUTPUT);
+  pinMode(MOTOR, OUTPUT);
+	pinMode(LED_GREEN, OUTPUT);
+  pinMode(LED_RED, OUTPUT);
 
-	start_serial(9600);
+  pinMode(BTN_PLUS, INPUT_PULLUP);
+  pinMode(BTN_MOINS, INPUT_PULLUP);
+  pinMode(BTN, INPUT_PULLUP);
+  
+  Serial.begin(9600);
 }
 
+int offset_y = 0;
+int offset_z = 0;
+float XYZ[] = {0, 0,0};
+String command;
+int index, previous;
+
+String readline() {
+  // Renvoie la ligne (finit par \n) dispo sur la liaison s�rie
+  String data = "";
+  char c = ' ';
+  while (c != '\n'){
+    if (Serial.available() > 0) {
+      c = Serial.read();
+      data += c;
+    }
+  }
+  return data;
+}
 
 void loop()
 {
-  String x_str = readline();
-  String y_str = readline();
-  String z_str = readline();
-  String offset_y_str = readline();
-  String offset_z_str = readline();
+  switch(state){
+    case 0:
+      // Init des actionneurs
+      digitalWrite(LED_RED, LOW);
+      digitalWrite(LED_GREEN, LOW);
+      digitalWrite(MOTOR, LOW);
+      
+      pan_servo.write(pan);
+      tilt_servo.write(tilt);
 
-  int x = x_str.substring(0, x_str.length() - 2).toInt();
-  int y = y_str.substring(0, y_str.length() - 2).toInt();
-  int z = z_str.substring(0, z_str.length() - 2).toInt();
-  
-  int offset_y = offset_y_str.substring(0, offset_y_str.length() - 2).toInt();
-  int offset_z = offset_z_str.substring(0, offset_z_str.length() - 2).toInt();
+      state = 1;
+      break;
 
-  int tilt = get_tilt(x, y+offset_y, z+offset_z);
-  int pan = get_pan(x, y+offset_y, z+offset_z);
+    case 1:
+      // Réglage Delta x et Delta z
+      digitalWrite(LED_RED, HIGH);
+      // Placer la mire au centre de la camera et le laser juste en dessous de la mire
+      // Distance : 1mm
 
-  if ((TILT_START+tilt > 10) && (TILT_START+tilt<170)){
-    tilt_servo.write(TILT_START + tilt);
+      // Puis modifier tilt pour placer le laser sur la mire 
+      if (digitalRead(BTN_PLUS) == LOW){
+        tilt = tilt + 5;
+      }
+      else if (digitalRead(BTN_MOINS) == LOW){
+        tilt = tilt - 5;
+      }
+      else if (digitalRead(BTN) == LOW){
+        state = 2;
+      }
+      tilt_servo.write(tilt);
+      delay(100); // Bounce Filter
+      break;
+      
+    case 2:
+      // Réglage Delta y
+      digitalWrite(LED_RED, LOW);
+      digitalWrite(LED_GREEN, HIGH);
+
+      // Placer la mire à 50cm du centre, sur l'axe central horizontal
+
+      // Puis modifier PAN pour placer le laser sur la mire
+      if (digitalRead(BTN_PLUS) == LOW){
+        pan = pan + 5;
+      }
+      else if (digitalRead(BTN_MOINS) == LOW){
+        pan = pan - 5;
+      }
+      else if (digitalRead(BTN) == LOW){
+        state = 3;
+      }
+      pan_servo.write(pan);
+      delay(100); // Bounce Filter
+      break;
+
+    case 3:
+      // Calcul des offset
+      offset_z = 50 / tan((float) pan*3.1415/180) - 100; // Unit : cm
+      offset_y = (100 + offset_z) * tan((float) tilt*3.1415/180);
+      state = 4;
+      digitalWrite(LED_GREEN, LOW);
+      break;
+
+    case 4:
+      // Attente de consigne
+      command = readline(); //"X,Y,Z\r\n" avec une précision de 10^-2
+      index = 0;
+      previous = 0;
+      for (int i=0; i<command.length(); i++){
+        if (command[i] == ',' || command[i] == '\r') {
+          XYZ[index] = command.substring(previous, i).toFloat();
+          index++;
+          previous = i + 1;
+        }
+      }
+      state = 5;
+      break;
+      
+    case 5:
+      // Applique la consigne
+      float x = XYZ[0];
+      float y = XYZ[1] + offset_y;
+      float z = XYZ[2] + offset_z;
+      
+      pan = PAN_START + atan(x/z);
+      tilt = TILT_START + atan(y/sqrt(x*x+z*z));
+
+      tilt_servo.write(tilt);
+      pan_servo.write(pan);
+      state = 4;
   }
-  if ((PAN_START + pan > 10) && (PAN_START + pan < 170)){
-    pan_servo.write(PAN_START + pan);
-  }
-}
-
-int get_tilt(int x, int y, int z){
-  return atan(y/x)*180/3.1415;  
-}
-int get_pan(int x, int y, int z){
-  return 90 - acos(z/sqrt(x*x + y*y + z*z));
-}
-
-
-
-void start_serial(long baudrate) {
-	// Initialisation de la liaison s�rie
-	Serial.begin(baudrate);
-	String data;
-
-	// Proc�dure de connexion : Re�oit SYN, repond ACK et c'est bon.
-	while (data != String("SYN\r\n")) {
-		data = readline();
-		if (data != String("SYN\r\n")) {
-			Serial.println("NACK"); // Si message re�u bizarre, r�pond NACK
-		}
-	}
-	Serial.println("ACK");
-}
-
-String readline() {
-	// Renvoie la ligne (finit par \n) dispo sur la liaison s�rie
-	String data = "";
-	char c = ' ';
-	while (c != '\n') {
-		if (Serial.available() > 0) {
-			c = Serial.read();
-			data += c;
-		}
-	}
-	return data;
 }
