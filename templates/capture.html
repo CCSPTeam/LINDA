@@ -46,21 +46,36 @@
 
     console.log("Uploading...")
     var image = img
+    var fd = new FormData();
+    console.log(img)
+    /*    fd.append('file',img);
+    $.ajax({
+        type: "POST",
+        crossDomain: true,
+          headers: {  'Access-Control-Allow-Origin': "*" },
+        url: "https://127.0.0.1:5000/apiCapture?callback=?", //I have doubt about this url, not sure if something specific must come before "/take_pic"
+        data: fd,
+        contentType: false,
+        processData: false,
+        success: (response) => {
+            if(response != 0){
+                console.log(response) // Display image element
+            }else{
+                 console.log(response)
+            }
+        },
+        error: (error) => {
+            console.log("Error uploading image: ", error)
+        }*/
+            img.src = canvas.toDataURL('image/png');
+      document.body.appendChild(img);
+     $.post( "/apiCapture", {
+          canvas_data: img.src
+        }, function(err, req, resp){
+          console.log('PIERRE VOYELLE HAHAHA DRAULE')
+        });
 
-    var formData = new FormData();
-    formData.append("imageBase64", image);
-    var xmlhttp = new XMLHttpRequest();
-    xmlhttp.open("POST", "https://127.0.0.1:5000/capture.html");
 
-    // check when state changes,
-    xmlhttp.onreadystatechange = function() {
-
-    if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-        alert(xmlhttp.responseText);
-        }
-    }
-
-    xmlhttp.send(formData);
 
     }
 
