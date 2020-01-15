@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <meta charset="utf-8">
+    <title>Display Webcam Stream</title>
+
+    <style>
+    #container {
+    margin: 0px auto;
+    width: 400px;
+    height: 300px;
+    border: 10px #333 solid;
+    }
+    #videoElement {
+    width: 400px;
+    height: 300px;
+    background-color: #666;
+    }
+    </style>
+    </head>
+
+    <body>
+    <div id="container">
+    <video autoplay="true" id="videoElement"></video>
+    </div>
+    <script>
+
+    var video = document.querySelector("#videoElement"), canvas;
+
+    function takeSnapshot() {
+      var img = document.querySelector('img') || document.createElement('img');
+      var context;
+      var width = video.offsetWidth
+        , height = video.offsetHeight;
+
+      canvas = canvas || document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, width, height);
+
+      img.src = canvas.toDataURL('image/png');
+      document.body.appendChild(img);
+
+    console.log("Uploading...")
+    var image = img
+    var fd = new FormData();
+    console.log(img)
+    /*    fd.append('file',img);
+    $.ajax({
+        type: "POST",
+        crossDomain: true,
+          headers: {  'Access-Control-Allow-Origin': "*" },
+        url: "https://127.0.0.1:5000/apiCapture?callback=?", //I have doubt about this url, not sure if something specific must come before "/take_pic"
+        data: fd,
+        contentType: false,
+        processData: false,
+        success: (response) => {
+            if(response != 0){
+                console.log(response) // Display image element
+            }else{
+                 console.log(response)
+            }
+        },
+        error: (error) => {
+            console.log("Error uploading image: ", error)
+        }*/
+            img.src = canvas.toDataURL('image/png');
+      document.body.appendChild(img);
+     $.post( "/apiCapture", {
+          canvas_data: img.src
+        }, function(err, req, resp){
+          console.log('PIERRE VOYELLE HAHAHA DRAULE')
+        });
+
+
+
+    }
+
+
+    if (navigator.mediaDevices.getUserMedia) {
+      navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function (stream) {
+            video.srcObject = stream;
+			video.addEventListener('click', takeSnapshot);
+        })
+        .catch(function (err0r) {
+          console.log(err0r);
+        });
+    }
+    </script>
+    </body>
+    </html>
