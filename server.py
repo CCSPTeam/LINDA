@@ -1,35 +1,51 @@
-import http.server as server
-import socketserver
+import base64
+import time
 
-parameters = {
-    'PORT': 8080,
-    'SERVER_ADDRESS': "127.0.0.1"
-}
+import cv2
+from flask import Flask, request, render_template
+import re
+from PIL import Image
+from io import StringIO, BytesIO
+import numpy as np
+from flask_cors import CORS, cross_origin
 
-
-class SimpleServer(server.BaseHTTPRequestHandler):
-    def do_GET(self):
-        print('Path requested by client : ' + self.path)
-        try:
-            if self.path.endswith('.html'):
-                f = open('.'+self.path)
-                self.send_response(200)
-                self.send_header('Content-type', 'text-html')
-                self.end_headers()
-                self.wfile.write(f.read().encode())
-                f.close()
-        except IOError:
-            self.send_error(404, 'file not found')
+app = Flask(__name__)
+app.config['CORS_HEADERS'] = 'Content-Type'
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 
-if __name__ == '__main__':
-    Handler = SimpleServer
-    address = parameters['SERVER_ADDRESS']
-    port = parameters['PORT']
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-    print('Webserver is starting...')
-    httpd = socketserver.TCPServer((address, port), Handler)
 
-    print('Webserver is running on ' + address + '/' + str(port) + '...')
-    httpd.serve_forever()
+@app.route('/capture.html', methods=['GET'])
+def capture():
+    return render_template('capture.html')
+
+
+def index():
+    return render_template('index.html')
+
+
+@app.route('/apiCapture', methods=['POST'])
+@cross_origin(origin='localhost',headers=['Content- Type','Authorization'])
+def get_image():
+    image_b64 = request.values['canvas_data']
+    print(image_b64)
+    base64_data = re.sub('^data:image/.+;base64,', '', image_b64)
+    byte_data = base64.b64decode(base64_data)
+    image_data = BytesIO(byte_data)
+    img = Image.open(image_data)
+    t = time.time()
+    img.save("" + str(t) + '.png', "PNG")
+
+    image_PIL = Image.open(StringIO(image_b64))
+    image_np = np.array(image_PIL)
+    print('Image received: {}'.format(image_np.shape))
+    return ''
+
+
+if __name__ == "__main__":
+    app.run()
 
