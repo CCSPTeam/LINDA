@@ -178,9 +178,7 @@ void loop()
       
       pan = PAN_START + atan(x/z);
       tilt = TILT_START + atan(y/sqrt(x*x+z*z));
-      Serial.print(tilt);
-      Serial.print(",");
-      Serial.println(pan);
+
       tilt_servo.write(tilt);
       pan_servo.write(pan);
       state = 4;
