@@ -43,17 +43,25 @@
 
       img.src = canvas.toDataURL('image/png');
       document.body.appendChild(img);
-      console.log(img)
-      console.log(img.src)
-      $.ajax({
-        type: "POST",
-        url: "127.0.0.1:5000/capture.html",
-        data:{
-            imageBase64: img
+
+    console.log("Uploading...")
+    var image = img
+
+    var formData = new FormData();
+    formData.append("imageBase64", image);
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("POST", "https://127.0.0.1:5000/capture.html");
+
+    // check when state changes,
+    xmlhttp.onreadystatechange = function() {
+
+    if(xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+        alert(xmlhttp.responseText);
         }
-    }).done(function() {
-    console.log('sent');
-    });
+    }
+
+    xmlhttp.send(formData);
+
     }
 
 
@@ -61,10 +69,10 @@
       navigator.mediaDevices.getUserMedia({ video: true })
         .then(function (stream) {
             video.srcObject = stream;
-            video.addEventListener('click', takeSnapshot);
+			video.addEventListener('click', takeSnapshot);
         })
         .catch(function (err0r) {
-          console.log("Something went wrong!");
+          console.log(err0r);
         });
     }
     </script>
