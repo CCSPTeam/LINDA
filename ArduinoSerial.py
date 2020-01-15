@@ -40,6 +40,7 @@ class ArduinoSerial:
                     print("Error : Port return " + str(received))  # Si la liaison est occupée
                     self.link = None
             except serial.serialutil.SerialException:
+                print("Use on of following : ", [e.device for e in comports()])
                 print("Error : Access Denied")
                 self.link = None
         else:
@@ -66,7 +67,7 @@ class ArduinoSerial:
 
 if __name__ == '__main__':
     l = ArduinoSerial()
-    l.connect()
+    l.connect("COM4")
     time.sleep(5)
     print("send")
     l.send(1., 1., 1.)
