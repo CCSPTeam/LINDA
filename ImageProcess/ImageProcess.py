@@ -17,7 +17,12 @@ class Calibration:
     def compute(self):
         for img in self.tab_img:
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            self.data.append(detect_face(gray))
+            t = detect_face(gray)
+            if t is False:
+                print("ERROR : Calibration.compute() : Trop ou pas assez de visage dans l'image")
+                return False
+            else:
+                self.data.append(t)
         eq = np.polyfit(np.array([self.data[0][2], self.data[1][2], self.data[2][2]]), np.array(self.tab_measure), 1)
         self.eq_x1 = eq[0]
         self.eq_x0 = eq[1]
@@ -48,7 +53,12 @@ class ImageProcess:
         cv2.waitKey()
 
     def compute(self):
-        [self.x, self.y, self.w, self.h] = detect_face(self.img_gray)
+        t = detect_face(self.img_gray)
+        if t is False:
+            print("ERROR : ImageProcess.compute() : Trop ou pas assez de visage dans l'image")
+            return False
+        else:
+            [self.x, self.y, self.w, self.h] = t
         self.distance = (self.equation_x0 + self.equation_x1 * self.w)
         self.x_delta = (self.x - int(self.img.shape[1] / 2)) / self.w * self.size_face
         self.y_delta = (self.y - int(self.img.shape[0] / 2)) / self.w * self.size_face
@@ -75,13 +85,13 @@ def detect_face(img_gray):
 if __name__ == '__main__':
     # Calibration
     calibration = Calibration()
-    calibration.load(['img(1m).jpg', 'img(2m).jpg', 'img(3m).jpg'], [100, 200, 300])
+    calibration.load(['img/1m.jpg', 'img/2m.jpg', 'img/3m.jpg'], [100, 200, 300])
     calibration.compute()
     print(calibration)
 
     # Image Process
     imageProcess = ImageProcess(calibration)
-    imageProcess.load_img('test (3).jpg')
+    imageProcess.load_img('img/3m 1m.jpg')
     imageProcess.compute()
     print(imageProcess)
 
