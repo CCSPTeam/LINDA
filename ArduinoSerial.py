@@ -47,9 +47,9 @@ class ArduinoSerial:
             print("Already connected !")
 
     def send(self, x,y,z):
-        assert type(x) == float
-        assert type(y) == float
-        assert type(z) == float
+        x = float(x)
+        y = float(y)
+        z = float(z)
 
         s = str(round(x,2)) + "," + str(round(y,2)) + "," + str(round(z,2)) + "\r\n"
         print(s)
@@ -67,8 +67,18 @@ class ArduinoSerial:
 
 if __name__ == '__main__':
     l = ArduinoSerial()
-    l.connect("COM4")
+    l.connect("COM7")
     time.sleep(5)
     print("send")
     l.send(1., 1., 1.)
+    print(l.link.readline())
+
+    time.sleep(5)
+    print("send")
+    l.send(1., 2., 1.)
+    print(l.link.readline())
+
+    time.sleep(5)
+    print("send")
+    l.send(1., 1., 3.)
     print(l.link.readline())

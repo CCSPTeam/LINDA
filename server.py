@@ -9,11 +9,9 @@ from ArduinoSerial import ArduinoSerial
 from PIL import Image
 from io import StringIO, BytesIO
 import numpy as np
-from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 app.config['CORS_HEADERS'] = 'Content-Type'
-CORS(app, resources={r"/*": {"origins": "*"}})
 calibration= None
 
 @app.route('/')
@@ -32,7 +30,6 @@ def index():
 
 
 @app.route('/apiCapture', methods=['POST'])
-@cross_origin(origin='localhost',headers=['Content- Type','Authorization'])
 def get_image():
     image_b64 = request.values['canvas_data']
     print(image_b64)
@@ -51,21 +48,21 @@ def get_image():
     return ''
 
 def analyse_img(imgPath):
-    imageProcess = ImageProcess(calibration)
+    print(calibration)
+    imageProcess = ImageProcess(calibration.eq_x0, calibration.eq_x1, calibration.size_face)
     imageProcess.load_img(imgPath)
-    imageProcess.compute()
+    if imageProcess.compute():
+        arduino.send(-imageProcess.x_delta,imageProcess.y_delta,100)
     print(imageProcess)
     os.remove(imgPath)
-    arduino.send(imageProcess.x_delta,imageProcess.y_delta,imageProcess.distance)
 
 if __name__ == "__main__":
     calibration = Calibration()
     calibration.load(['ImageProcess/img/1m.jpg', 'ImageProcess/img/2m.jpg', 'ImageProcess/img/3m.jpg'],
                      [100, 200, 300])
     calibration.compute()
-    arduino =ArduinoSerial()
-    arduino.connect()
-
+    arduino = ArduinoSerial()
+    arduino.connect("COM7")
 
 
     app.run()
