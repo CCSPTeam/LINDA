@@ -17,11 +17,37 @@
     height: 300px;
     background-color: #666;
     }
+
+    .line1 {
+        width: 300px;
+        height: 300px;
+        border-bottom: 2px solid red;
+        -webkit-transform:
+            translateY(-1px)
+            translateX(200px)
+            rotate(90deg);
+        position: absolute;
+        /* top: -20px; */
+    }
+    .line2 {
+        width: 400px;
+        height: 300px;
+        border-bottom: 2px solid red;
+        -webkit-transform:
+            translateY(-100px)
+            translateX(453px)
+            rotate(0deg);
+        position: absolute;
+        top: -33px;
+        left: -13px;
+    }
     </style>
     </head>
 
     <body>
     <div id="container">
+     <div class="line1"></div>
+    <div class="line2"></div>
     <video autoplay="true" id="videoElement"></video>
     </div>
     <script>
