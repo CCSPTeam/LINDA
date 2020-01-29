@@ -10,8 +10,8 @@
 #define BTN_MOINS 11
 #define BTN 12
 
-#define TILT_START 85
-#define PAN_START 90
+int TILT_START =70;
+int PAN_START =90;
 
 Servo pan_servo;
 Servo tilt_servo;
@@ -102,6 +102,12 @@ void loop()
       
       pan_servo.write(pan);
       tilt_servo.write(tilt);
+      delay(1000);
+      pan_servo.write(25);
+      delay(1000);
+      pan_servo.write(150);
+      delay(1000);
+      pan_servo.write(pan);
 
       state = 1;
       break;
@@ -110,14 +116,14 @@ void loop()
       // Réglage Delta x et Delta z
       digitalWrite(LED_RED, HIGH);
       // Placer la mire au centre de la camera et le laser juste en dessous de la mire
-      // Distance : 1mm
+      // Distance : 1m
 
       // Puis modifier tilt pour placer le laser sur la mire 
       if (digitalRead(BTN_PLUS) == LOW){
-        tilt = tilt + 10;
+        tilt = tilt + 5;
       }
       else if (digitalRead(BTN_MOINS) == LOW){
-        tilt = tilt - 10;
+        tilt = tilt - 5;
       }
       else if (digitalRead(BTN) == LOW){
         state = 2;
@@ -135,10 +141,10 @@ void loop()
 
       // Puis modifier PAN pour placer le laser sur la mire
       if (digitalRead(BTN_PLUS) == LOW){
-        pan = pan + 10;
+        pan = pan + 5;
       }
       else if (digitalRead(BTN_MOINS) == LOW){
-        pan = pan - 10;
+        pan = pan - 5;
       }
       else if (digitalRead(BTN) == LOW){
         state = 3;
@@ -149,10 +155,12 @@ void loop()
 
     case 3:
       // Calcul des offset
-      offset_z = 50 / tan((float) pan*3.1415/180) - 100; // Unit : cm
-      offset_y = (100 + offset_z) * tan((float) tilt*3.1415/180);
+//      offset_z = 50 / tan((float) (pan-PAN_START)*3.1415/180) - 100; // Unit : cm
+//      offset_y = (100 + offset_z) * tan((float) (tilt-TILT_START)*3.1415/180);
       state = 4;
       digitalWrite(LED_GREEN, LOW);
+      //PAN_START = pan - atan(50.0/100.0)*180/3.14;
+      //TILT_START = tilt;
       break;
 
     case 4:
@@ -173,14 +181,31 @@ void loop()
     case 5:
       // Applique la consigne
       float x = XYZ[0];
-      float y = XYZ[1] + offset_y;
-      float z = XYZ[2] + offset_z;
-      
-      pan = PAN_START + atan(x/z);
-      tilt = TILT_START + atan(y/sqrt(x*x+z*z));
+      float y = XYZ[1];
+      float z = XYZ[2];
 
-      tilt_servo.write(tilt);
-      pan_servo.write(pan);
-      state = 4;
+      if (z==0){
+        state = 4;
+      }
+      else if(sqrt(x*x+z*z) == 0){
+        state = 4;
+      }
+      else{
+        pan = PAN_START + atan(x*1.25/z)/3.14*180;
+        // tilt = TILT_START + atan(y/sqrt(x*x+z*z))/3.14*180;
+
+        Serial.print(atan(x*100/z));
+        Serial.print(",");
+        Serial.println(pan);
+        //tilt_servo.write(tilt);
+        pan_servo.write(pan);
+        delay(1000);
+
+        digitalWrite(MOTOR, HIGH);
+        delay(1000);
+        digitalWrite(MOTOR, LOW);
+        state = 4;
+      }
+    
   }
 }
