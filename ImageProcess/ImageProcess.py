@@ -23,6 +23,8 @@ class Calibration:
                 return False
             else:
                 self.data.append(t)
+
+        print("", self.data)
         eq = np.polyfit(np.array([self.data[0][2], self.data[1][2], self.data[2][2]]), np.array(self.tab_measure), 1)
         self.eq_x1 = eq[0]
         self.eq_x0 = eq[1]
@@ -34,10 +36,10 @@ class Calibration:
 
 
 class ImageProcess:
-    def __init__(self, calibration):
-        self.equation_x0 = calibration.eq_x0
-        self.equation_x1 = calibration.eq_x1
-        self.size_face = calibration.size_face
+    def __init__(self, eq_x0, eq_x1, size_face):
+        self.equation_x0 = eq_x0
+        self.equation_x1 = eq_x1
+        self.size_face = size_face
         self.h, self.w, self.y, self.x = 0, 0, 0, 0
         self.img, self.img_gray = None, None
         self.distance = 0
@@ -60,8 +62,12 @@ class ImageProcess:
         else:
             [self.x, self.y, self.w, self.h] = t
         self.distance = (self.equation_x0 + self.equation_x1 * self.w)
-        self.x_delta = (self.x - int(self.img.shape[1] / 2)) / self.w * self.size_face
-        self.y_delta = (self.y - int(self.img.shape[0] / 2)) / self.w * self.size_face
+        print(self.img.shape)
+        p = self.size_face/self.w
+
+        self.x_delta = (self.x - int(self.img.shape[1] / 2)) * p
+        self.y_delta = (self.y - int(self.img.shape[0] / 2)) * p
+        return True
 
     def __repr__(self):
         return "ImageProcess" + "\n" \
@@ -90,8 +96,8 @@ if __name__ == '__main__':
     print(calibration)
 
     # Image Process
-    imageProcess = ImageProcess(calibration)
-    imageProcess.load_img('img/3m 1m.jpg')
+    imageProcess = ImageProcess(calibration.eq_x0, calibration.eq_x1, calibration.size_face)
+    imageProcess.load_img('img/1m -1m.jpg')
     imageProcess.compute()
     print(imageProcess)
 
